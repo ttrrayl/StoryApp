@@ -22,9 +22,6 @@ class MainViewModel (private val pref: UserSession) : ViewModel(){
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val _msg = MutableLiveData<String>()
-    val msg: LiveData<String> = _msg
-
     fun getToken(): LiveData<UserModel>{
         return pref.getToken().asLiveData()
     }

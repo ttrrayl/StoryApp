@@ -22,7 +22,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
-import com.example.storyapp.R
 import com.example.storyapp.createCustomTempFile
 import com.example.storyapp.data.local.UserModel
 import com.example.storyapp.data.local.UserSession
@@ -30,7 +29,6 @@ import com.example.storyapp.databinding.ActivityAddStoryBinding
 import com.example.storyapp.reduceFileImage
 import com.example.storyapp.uriToFile
 import com.example.storyapp.viewmodel.AddStoryViewModel
-import com.example.storyapp.viewmodel.MainViewModel
 import com.example.storyapp.viewmodel.ViewModelFactory
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -45,12 +43,10 @@ class AddStoryActivity : AppCompatActivity() {
     private lateinit var currentPhotoPath: String
     private var getFile: File? = null
     private lateinit var addStoryViewModel: AddStoryViewModel
-    private lateinit var user: UserModel
-    private var isError = false
 
     private val launcherIntentCamera = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ){
+    ) {
         if (it.resultCode == RESULT_OK) {
             val myFile = File(currentPhotoPath)
             myFile.let { file ->
@@ -73,6 +69,53 @@ class AddStoryActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityAddStoryBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        if (!allPermissionsGranted()) {
+            ActivityCompat.requestPermissions(
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+            )
+        }
+
+        binding.buttonCamera.setOnClickListener { startTakePhoto() }
+        binding.buttonGallery.setOnClickListener { startGallery() }
+        binding.buttonUpload.setOnClickListener { uploadImage() }
+
+        viewModelConfig()
+    }
+
+    private fun viewModelConfig(){
+        addStoryViewModel = ViewModelProvider(
+            this,
+            ViewModelFactory(UserSession.getInstance(dataStore))
+        )[AddStoryViewModel::class.java]
+        addStoryViewModel.isLoading.observe(this) {
+            showLoading(it)
+        }
+        addStoryViewModel.msg.observe(this) {
+            AlertDialog.Builder(this).apply {
+                setTitle("STATE")
+                setMessage(it)
+                setPositiveButton("OK") { _, _ ->
+                    val intent = Intent(context, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                    finish()
+                }
+                create()
+                show()
+            }
+        }
+    }
+
+    private fun showLoading(isLoading: Boolean) {
+        binding.pbAdd.visibility =
+            if (isLoading) View.VISIBLE else View.GONE
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -92,68 +135,13 @@ class AddStoryActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityAddStoryBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-
-        addStoryViewModel = ViewModelProvider(this, ViewModelFactory(UserSession.getInstance(dataStore)))[AddStoryViewModel::class.java]
-        addStoryViewModel.isLoading.observe(this) {
-            showLoading(it)
-        }
-        addStoryViewModel.msg.observe(this){
-            AlertDialog.Builder(this).apply {
-                setTitle("STATE")
-                setMessage(it)
-                setPositiveButton("OK") {_,_, ->
-                    val intent = Intent(context, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    finish()
-                }
-                create()
-                show()
-             }
-        }
-
-        if (!allPermissionsGranted()) {
-            ActivityCompat.requestPermissions(
-                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-            )
-        }
-
-        binding.buttonCamera.setOnClickListener{ startTakePhoto()}
-        binding.buttonGallery.setOnClickListener { startGallery() }
-        binding.buttonUpload.setOnClickListener { uploadImage() }
-
-
-
-    }
-
-
-    private fun showLoading(isLoading: Boolean) {
-        binding.pbAdd.visibility =
-            if (isLoading) View.VISIBLE else View.GONE
-    }
-
-
-//    private val launcherIntentCamera = registerForActivityResult(
-//        ActivityResultContracts.StartActivityForResult()
-//    ) {
-//        if (it.resultCode == RESULT_OK) {
-//            val imageBitmap = it.data?.extras?.get("data") as Bitmap
-//            binding.ivAdd.setImageBitmap(imageBitmap)
-//        }
-//    }
-
     private fun startTakePhoto() {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         intent.resolveActivity(packageManager)
 
         createCustomTempFile(application).also {
             val photoURI: Uri = FileProvider.getUriForFile(
-                this@AddStoryActivity, "com.example.storyapp",it
+                this@AddStoryActivity, "com.example.storyapp", it
             )
             currentPhotoPath = it.absolutePath
             intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
@@ -162,7 +150,7 @@ class AddStoryActivity : AppCompatActivity() {
         }
     }
 
-    private fun startGallery(){
+    private fun startGallery() {
         val intent = Intent()
         intent.action = ACTION_GET_CONTENT
         intent.type = "image/*"
@@ -171,27 +159,36 @@ class AddStoryActivity : AppCompatActivity() {
     }
 
     private fun uploadImage() {
-        if (getFile != null) {
-            val file = reduceFileImage(getFile as File)
-            val description = binding.etDesc.text.toString().toRequestBody("text/plain".toMediaType())
-            val requestImageFile = file.asRequestBody("image/jpeg".toMediaType())
-            val imageMultipart: MultipartBody.Part = MultipartBody.Part.createFormData(
-                "photo",
-                file.name,
-                requestImageFile
-            )
-            addStoryViewModel.uploadStory(TOKEN,imageMultipart,description)
+        val desc = binding.etDesc.text.toString()
+        when {
+            desc.isEmpty() -> binding.etDesc.error = "Fill description"
+            getFile == null -> {
+                Toast.makeText(
+                    this@AddStoryActivity,
+                    "Choose the image first",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            else -> {
+                val file = reduceFileImage(getFile as File)
+                val description =
+                    binding.etDesc.text.toString().toRequestBody("text/plain".toMediaType())
+                val requestImageFile = file.asRequestBody("image/jpeg".toMediaType())
+                val imageMultipart: MultipartBody.Part = MultipartBody.Part.createFormData(
+                    "photo",
+                    file.name,
+                    requestImageFile
+                )
+                addStoryViewModel.uploadStory(TOKEN, imageMultipart, description)
 
-        } else {
-            Toast.makeText(this@AddStoryActivity, "Silakan pilih gambar terlebih dahulu", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
 
-
-    companion object{
+    companion object {
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
         private const val REQUEST_CODE_PERMISSIONS = 10
-        var TOKEN = ""
+        var TOKEN = "token"
     }
 }

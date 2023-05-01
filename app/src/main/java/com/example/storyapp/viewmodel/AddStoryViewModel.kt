@@ -40,9 +40,7 @@ class AddStoryViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val responseBody = response.body()
                     if (responseBody != null && !responseBody.error) {
-                        _msg.value = "File successful uploaded"
-                    } else{
-                        _msg.value = "gagal"
+                        _msg.value = "Successfully upload the file"
                     }
                 } else {
                     _msg.value = response.message().toString()

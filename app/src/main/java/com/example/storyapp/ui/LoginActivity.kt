@@ -7,7 +7,6 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -38,33 +37,6 @@ class LoginActivity : AppCompatActivity() {
 
         weakReference = WeakReference(binding)
 
-       val pref = UserSession.getInstance(dataStore)
-
-        loginViewModel = ViewModelProvider(this, ViewModelFactory(pref))[LoginViewModel::class.java]
-        loginViewModel.getToken().observe(this) { user ->
-            this.user = user
-        }
-        loginViewModel.isLoading.observe(this) {
-            showLoading(it)
-        }
-        loginViewModel.msg.observe(this) {
-            AlertDialog.Builder(this).apply {
-                setTitle(getString(R.string.app_name))
-                setMessage(it)
-                setPositiveButton("OK") {_,_ ->
-                    val intent = Intent(context, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    finish()
-                }
-                create()
-                show()
-            }
-        }
-//        loginViewModel.msg.observe(this) {
-//            Toast.makeText(this@LoginActivity,it,Toast.LENGTH_LONG).show()
-//        }
-
         binding.buttonLogin.setOnClickListener{
             val email = binding.edEmail.text.toString()
             val password = binding.etPassword.text.toString()
@@ -82,10 +54,6 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-//        binding.buttonLogin.setOnClickListener{
-//            login()
-//        }
-
         binding.tvAkun.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
             finish()
@@ -95,12 +63,39 @@ class LoginActivity : AppCompatActivity() {
             .load("https://th.bing.com/th/id/OIP.1MZ3IQ50dBysLAdeCnt5wwHaHa?pid=ImgDet&rs=1")
             .into(binding.ivLogo)
 
+        viewModelConfig()
         playAnimation()
     }
 
-//    private fun enableButtonLogin(){
-//        binding.buttonLogin.isEnabled = inputEmail && inputPassword
-//    }
+    private fun viewModelConfig(){
+        val pref = UserSession.getInstance(dataStore)
+
+        loginViewModel = ViewModelProvider(this, ViewModelFactory(pref))[LoginViewModel::class.java]
+        loginViewModel.getToken().observe(this) { user ->
+            this.user = user
+        }
+        loginViewModel.isLoading.observe(this) {
+            showLoading(it)
+        }
+        loginViewModel.msg.observe(this) {
+            AlertDialog.Builder(this).apply {
+                setTitle(getString(R.string.app_name))
+                setMessage(it)
+                setPositiveButton("OK") {_,_ ->
+                }
+                create()
+                show()
+            }
+        }
+        loginViewModel.isLogin.observe(this){
+            if (it) {
+                val intent = Intent(this, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                finish()
+            }
+        }
+    }
 
     private fun showLoading(isLoading: Boolean){
         binding.pbLogin.visibility =
@@ -111,21 +106,16 @@ class LoginActivity : AppCompatActivity() {
         val logo = ObjectAnimator.ofFloat(binding.ivLogo, View.ALPHA, 1f).setDuration(200)
         val tv_halo = ObjectAnimator.ofFloat(binding.tvHalo, View.ALPHA, ALPHA).setDuration(DURATION)
         val tv_login = ObjectAnimator.ofFloat(binding.tvLogin, View.ALPHA, ALPHA).setDuration(DURATION)
-      //  val tv_email = ObjectAnimator.ofFloat(binding.tvEmail, View.ALPHA, ALPHA).setDuration(DURATION)
         val layout_email = ObjectAnimator.ofFloat(binding.layoutEmail, View.ALPHA, ALPHA).setDuration(DURATION)
-        //val tv_password = ObjectAnimator.ofFloat(binding.tvPassword, View.ALPHA, ALPHA).setDuration(DURATION)
         val layout_password = ObjectAnimator.ofFloat(binding.layoutPassword, View.ALPHA, ALPHA).setDuration(DURATION)
         val tv_regis = ObjectAnimator.ofFloat(binding.tvAkun, View.ALPHA, ALPHA).setDuration(DURATION)
         val button_login = ObjectAnimator.ofFloat(binding.buttonLogin, View.ALPHA, ALPHA).setDuration(DURATION)
         AnimatorSet().apply {
-         //   startDelay = 500
             playSequentially(
                 logo,
                 tv_halo,
                 tv_login,
-           //     tv_email,
                 layout_email,
-             //   tv_password,
                 layout_password,
                 tv_regis,
                 button_login
@@ -133,45 +123,6 @@ class LoginActivity : AppCompatActivity() {
             start()
         }
     }
-
-//    private fun saveSession(loginResult: LoginResult){
-//        showLoading(false)
-//        loginViewModel.token(loginResult.token as String)
-//        val intent = Intent(this, MainActivity::class.java)
-//        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//        startActivity(intent)
-//        finish()
-//    }
-
-//    private fun login(){
-//        showLoading(true)
-//        val client = ApiConfig.getApiService()
-//            .login(binding.edEmail.text.toString(), passwordET.text.toString())
-//        client.enqueue(object: Callback<LoginResponse>{
-//            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-//                val responseBody = response.body()
-//                if (response.isSuccessful && responseBody != null){
-//                    if (responseBody.error == true) {
-//                        showLoading(false)
-//                        Toast.makeText(this@LoginActivity, responseBody.message, Toast.LENGTH_LONG).show()
-//                    } else {
-//                        saveSession(responseBody.loginResult as LoginResult)
-//                        Toast.makeText(this@LoginActivity, "sukses", Toast.LENGTH_LONG).show()
-//                    }
-//                } else {
-//                    showLoading(false)
-//                    Log.e(TAG,"onFailure : ${response.message()}")
-//                    Toast.makeText(this@LoginActivity, response.message(), Toast.LENGTH_LONG).show()
-//                }
-//            }
-//
-//            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-//                showLoading(false)
-//                Log.e(TAG, "onFailure: ${t.message}")
-//                Toast.makeText(this@LoginActivity, t.message, Toast.LENGTH_LONG).show()
-//            }
-//        })
-//    }
 
     companion object {
         fun isPassError(isError: Boolean) {

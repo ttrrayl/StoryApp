@@ -34,6 +34,14 @@ class MainActivity : AppCompatActivity() {
         val layoutManager = LinearLayoutManager(this)
         binding.rvStory.layoutManager = layoutManager
 
+        binding.fbAddStory.setOnClickListener{
+            startActivity(Intent(this@MainActivity, AddStoryActivity::class.java))
+        }
+
+        viewModelConfig()
+    }
+
+    private fun viewModelConfig(){
         val pref = UserSession.getInstance(dataStore)
         mainViewModel =
             ViewModelProvider(this, ViewModelFactory(pref))[MainViewModel::class.java]
@@ -56,7 +64,7 @@ class MainActivity : AppCompatActivity() {
             if (it.isEmpty()){
                 AlertDialog.Builder(this@MainActivity).apply {
                     setTitle("Sorry :(")
-                    setMessage("List Kosong")
+                    setMessage("There is nothing here")
                     setPositiveButton("OK"){_,_ ->
                         finish()
                     }
@@ -66,12 +74,6 @@ class MainActivity : AppCompatActivity() {
             }
             listStory(it)
         }
-
-        binding.fbAddStory.setOnClickListener{
-            startActivity(Intent(this@MainActivity, AddStoryActivity::class.java))
-        }
-
-
     }
 
     private fun showLoading(isLoading: Boolean) {
@@ -93,8 +95,8 @@ class MainActivity : AppCompatActivity() {
         when(item.itemId) {
             R.id.menu_logout -> {
                 AlertDialog.Builder(this).apply {
-                    setTitle("Konfirmasi")
-                    setMessage("Anda yakin ingin keluar?")
+                    setTitle("CONFIRMATION")
+                    setMessage("Logout of your account?")
                     setPositiveButton("Yes") {_,_ ->
                         mainViewModel.logout()
                         finish()

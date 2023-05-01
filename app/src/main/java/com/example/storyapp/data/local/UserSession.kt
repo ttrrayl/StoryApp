@@ -10,8 +10,6 @@ import androidx.datastore.preferences.core.edit
 
 class UserSession private constructor(private val dataStore: DataStore<Preferences>) {
 
-    private val key = stringPreferencesKey("user_token")
-
     fun getToken(): Flow<UserModel> {
         return dataStore.data.map { preferences ->
             UserModel(
