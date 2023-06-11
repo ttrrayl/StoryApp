@@ -1,10 +1,12 @@
 package com.example.storyapp.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.storyapp.data.local.UserSession
+import com.example.storyapp.di.Injection
 
-class ViewModelFactory (private val pref: UserSession) : ViewModelProvider.NewInstanceFactory() {
+class ViewModelFactory (private val context: Context, private val pref: UserSession) : ViewModelProvider.NewInstanceFactory() {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
@@ -15,7 +17,7 @@ class ViewModelFactory (private val pref: UserSession) : ViewModelProvider.NewIn
                 RegisterViewModel(pref) as T
             }
             modelClass.isAssignableFrom(MainViewModel::class.java) -> {
-                MainViewModel(pref) as T
+                MainViewModel(Injection.provideRepository(context), pref) as T
             }
             modelClass.isAssignableFrom(AddStoryViewModel::class.java) -> {
                 AddStoryViewModel() as T

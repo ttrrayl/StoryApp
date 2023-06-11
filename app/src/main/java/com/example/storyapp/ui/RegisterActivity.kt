@@ -48,7 +48,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener {
     private fun viewModelConfig(){
         val pref = UserSession.getInstance(dataStore)
         registerViewModel = ViewModelProvider(
-            this, ViewModelFactory(pref))[RegisterViewModel::class.java]
+            this, ViewModelFactory(this, pref))[RegisterViewModel::class.java]
 
         registerViewModel.isLoading.observe(this) {
             showLoading(it)

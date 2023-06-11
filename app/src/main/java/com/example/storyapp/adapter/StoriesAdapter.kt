@@ -3,15 +3,32 @@ package com.example.storyapp.adapter
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.paging.PagingDataAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.storyapp.data.remote.response.ListStoryItem
 import com.example.storyapp.databinding.ItemRvBinding
 import com.example.storyapp.ui.DetailStoryActivity
 
-class StoriesAdapter(private val listStories: List<ListStoryItem>): RecyclerView.Adapter<StoriesAdapter.ViewHolder>(){
+class StoriesAdapter : PagingDataAdapter<ListStoryItem, StoriesAdapter.ViewHolder>(DIFF_CALLBACK){
 
-    class ViewHolder (val binding: ItemRvBinding): RecyclerView.ViewHolder(binding.root)
+    class ViewHolder (private val binding: ItemRvBinding): RecyclerView.ViewHolder(binding.root) {
+        fun bind(data: ListStoryItem, holder: ViewHolder){
+            Glide.with(holder.itemView.context)
+                .load(data.photoUrl)
+                .into(holder.binding.ivGambarRv)
+
+            holder.binding.tvUsername.text = data.name
+            holder.binding.tvDeskripsi.text = data.description
+            holder.binding.tvTanggal.text = data.createdAt
+            holder.itemView.setOnClickListener{
+                val intent = Intent(holder.itemView.context, DetailStoryActivity::class.java)
+                intent.putExtra(DetailStoryActivity.STORY_DETAIL, data)
+                holder.itemView.context.startActivity(intent)
+            }
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemRvBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -19,19 +36,25 @@ class StoriesAdapter(private val listStories: List<ListStoryItem>): RecyclerView
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        Glide.with(holder.itemView.context)
-            .load(listStories[position].photoUrl)
-            .into(holder.binding.ivGambarRv)
-
-        holder.binding.tvUsername.text = listStories[position].name
-        holder.binding.tvDeskripsi.text = listStories[position].description
-        holder.binding.tvTanggal.text = listStories[position].createdAt
-        holder.itemView.setOnClickListener{
-            val intent = Intent(holder.itemView.context, DetailStoryActivity::class.java)
-            intent.putExtra(DetailStoryActivity.STORY_DETAIL, listStories[position])
-            holder.itemView.context.startActivity(intent)
+        val data = getItem(position)
+        if (data != null) {
+            holder.bind(data, holder)
         }
+
     }
 
-    override fun getItemCount()= listStories.size
+    companion object{
+        val DIFF_CALLBACK = object : DiffUtil.ItemCallback<ListStoryItem>(){
+            override fun areItemsTheSame(oldItem: ListStoryItem, newItem: ListStoryItem): Boolean {
+                return oldItem == newItem
+            }
+
+            override fun areContentsTheSame(
+                oldItem: ListStoryItem,
+                newItem: ListStoryItem
+            ): Boolean {
+                return oldItem.id == newItem.id
+            }
+        }
+    }
 }

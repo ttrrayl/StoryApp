@@ -90,7 +90,7 @@ class AddStoryActivity : AppCompatActivity() {
     private fun viewModelConfig(){
         addStoryViewModel = ViewModelProvider(
             this,
-            ViewModelFactory(UserSession.getInstance(dataStore))
+            ViewModelFactory(this, UserSession.getInstance(dataStore))
         )[AddStoryViewModel::class.java]
         addStoryViewModel.isLoading.observe(this) {
             showLoading(it)

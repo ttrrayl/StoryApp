@@ -27,7 +27,14 @@ interface ApiService {
     ): Call<LoginResponse>
 
     @GET("stories")
-    fun getStories(
+    suspend fun getStories(
+        @Header("Authorization") authorization: String,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): MainResponse
+
+    @GET("stories?location=1")
+    fun getStoriesMap(
         @Header("Authorization") authorization: String
     ): Call<MainResponse>
 

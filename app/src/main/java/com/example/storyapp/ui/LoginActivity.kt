@@ -70,7 +70,7 @@ class LoginActivity : AppCompatActivity() {
     private fun viewModelConfig(){
         val pref = UserSession.getInstance(dataStore)
 
-        loginViewModel = ViewModelProvider(this, ViewModelFactory(pref))[LoginViewModel::class.java]
+        loginViewModel = ViewModelProvider(this, ViewModelFactory(this, pref))[LoginViewModel::class.java]
         loginViewModel.getToken().observe(this) { user ->
             this.user = user
         }

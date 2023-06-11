@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     private fun viewModelConfig(){
         val pref = UserSession.getInstance(dataStore)
         mainViewModel =
-            ViewModelProvider(this, ViewModelFactory(pref))[MainViewModel::class.java]
+            ViewModelProvider(this, ViewModelFactory(this, pref))[MainViewModel::class.java]
 
         mainViewModel.isLoading.observe(this){
             showLoading(it)
@@ -53,27 +53,27 @@ class MainActivity : AppCompatActivity() {
         mainViewModel.getToken().observe(this){ user ->
             if (user.isLogin) {
                 AddStoryActivity.TOKEN = user.token
-                mainViewModel.getStories(user.token)
+                getStory(user.token)
             } else {
                 startActivity(Intent(this,LoginActivity::class.java))
                 finish()
             }
         }
 
-        mainViewModel.listStory.observe(this){
-            if (it.isEmpty()){
-                AlertDialog.Builder(this@MainActivity).apply {
-                    setTitle("Sorry :(")
-                    setMessage("There is nothing here")
-                    setPositiveButton("OK"){_,_ ->
-                        finish()
-                    }
-                    create()
-                    show()
-                }
-            }
-            listStory(it)
-        }
+//        mainViewModel.listStory.observe(this){
+//            if (it.isEmpty()){
+//                AlertDialog.Builder(this@MainActivity).apply {
+//                    setTitle("Sorry :(")
+//                    setMessage("There is nothing here")
+//                    setPositiveButton("OK"){_,_ ->
+//                        finish()
+//                    }
+//                    create()
+//                    show()
+//                }
+//            }
+//            listStory(it)
+//        }
     }
 
     private fun showLoading(isLoading: Boolean) {
@@ -81,8 +81,13 @@ class MainActivity : AppCompatActivity() {
             if (isLoading) View.VISIBLE else View.GONE
     }
 
-    private fun listStory(itemList: List<ListStoryItem>?) {
-        val adapter = itemList?.let { StoriesAdapter(it) }
+    private fun getStory(token: String) {
+        val adapter = StoriesAdapter()
+        binding.rvStory.setHasFixedSize(true)
+        mainViewModel.getStories(token).observe(this){
+
+            adapter.submitData(lifecycle, it)
+        }
         binding.rvStory.adapter = adapter
     }
 
@@ -105,6 +110,9 @@ class MainActivity : AppCompatActivity() {
                     create()
                     show()
                 }
+            }
+            R.id.menu_map -> {
+                startActivity(Intent(this@MainActivity, MapsActivity::class.java))
             }
         }
         return true
