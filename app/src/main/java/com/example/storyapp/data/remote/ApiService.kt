@@ -1,5 +1,8 @@
 package com.example.storyapp.data.remote
 
+import com.example.storyapp.data.local.BuildingModel
+import com.example.storyapp.data.local.ClassesModel
+import com.example.storyapp.data.local.DetailFacilModel
 import com.example.storyapp.data.remote.response.AddStoryResponse
 import com.example.storyapp.data.remote.response.LoginResponse
 import com.example.storyapp.data.remote.response.MainResponse
@@ -11,20 +14,20 @@ import retrofit2.http.*
 
 interface ApiService {
 
-    @FormUrlEncoded
-    @POST("register")
-    fun register(
-        @Field("name") name: String,
-        @Field("email") email: String,
-        @Field("password") password: String
-    ): Call<RegisterResponse>
-
-    @FormUrlEncoded
-    @POST("login")
-    fun login(
-        @Field("email") email: String,
-        @Field("password") password: String
-    ): Call<LoginResponse>
+//    @FormUrlEncoded
+//    @POST("register")
+//    fun register(
+//        @Field("name") name: String,
+//        @Field("email") email: String,
+//        @Field("password") password: String
+//    ): Call<RegisterResponse>
+//
+//    @FormUrlEncoded
+//    @POST("login")
+//    fun login(
+//        @Field("email") email: String,
+//        @Field("password") password: String
+//    ): Call<LoginResponse>
 
     @GET("stories")
     suspend fun getStories(
@@ -33,10 +36,19 @@ interface ApiService {
         @Query("size") size: Int
     ): MainResponse
 
-    @GET("stories?location=1")
-    fun getStoriesMap(
-        @Header("Authorization") authorization: String
-    ): Call<MainResponse>
+    @GET("building")
+    fun listBuilding(): Call<List<BuildingModel>>
+
+    @GET("classes")
+    fun listClasses(): Call<List<ClassesModel>>
+
+    @GET("detail_facil")
+    fun listDetailFacil(): Call<List<DetailFacilModel>>
+
+//    @GET("stories?location=1")
+//    fun getStoriesMap(
+//        @Header("Authorization") authorization: String
+//    ): Call<MainResponse>
 
     @Multipart
     @POST("stories")
